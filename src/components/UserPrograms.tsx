@@ -9,6 +9,8 @@ import {
   Clock,
   AppleIcon,
   ShieldIcon,
+  NotebookIcon,
+  NotebookPenIcon,
 } from "lucide-react";
 import { USER_PROGRAMS } from "@/constants";
 
@@ -136,7 +138,7 @@ const UserPrograms = () => {
 
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-md bg-secondary/10 text-secondary mt-0.5">
-                      <AppleIcon className="h-5 w-5" />
+                      <NotebookPenIcon className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-center">
@@ -183,6 +185,7 @@ const UserPrograms = () => {
             </Card>
           ))}
         </div>
+   
 
         {/* CTA section */}
         <div className="mt-16 text-center">
