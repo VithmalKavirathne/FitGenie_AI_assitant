@@ -8,7 +8,7 @@ import { constants } from "buffer";
 
 const http = httpRouter()
 
-const genAI = new GoogleGenerativeAI(process.env.Gemini_Api_key!)
+const genAI = new GoogleGenerativeAI(process.env.Gemini_Api_Key!)
 
 http.route({
     path: "/clerk-webhook",
@@ -121,6 +121,8 @@ http.route({
                 dietary_restrictions,
             } = payload
 
+            console.log("Payload is here:", payload);
+
             const model = genAI.getGenerativeModel({
                 // geimini doc
 
@@ -181,15 +183,95 @@ http.route({
         
         // AI input validation
 
+        let workoutPlan = JSON.parse(workoutPlanText);
+        workoutPlan = validateWorkoutPlan(workoutPlan);
 
+        const dietPrompt = `You are an experienced nutrition coach creating a personalized diet plan based on:
+        Age: ${age}
+        Height: ${height}
+        Weight: ${weight}
+        Fitness goal: ${fitness_goal}
+        Dietary restrictions: ${dietary_restrictions}
+        
+        As a professional nutrition coach:
+        - Calculate appropriate daily calorie intake based on the person's stats and goals
+        - Create a balanced meal plan with proper macronutrient distribution
+        - Include a variety of nutrient-dense foods while respecting dietary restrictions
+        - Consider meal timing around workouts for optimal performance and recovery
+        
+        CRITICAL SCHEMA INSTRUCTIONS:
+        - Your output MUST contain ONLY the fields specified below, NO ADDITIONAL FIELDS
+        - "dailyCalories" MUST be a NUMBER, not a string
+        - DO NOT add fields like "supplements", "macros", "notes", or ANYTHING else
+        - ONLY include the EXACT fields shown in the example below
+        - Each meal should include ONLY a "name" and "foods" array
 
-
-
-        } catch (error) {
-            console.log("Error in creating the plan")
-            
+        Return a JSON object with this EXACT structure and no other fields:
+        {
+          "dailyCalories": 2000,
+          "meals": [
+            {
+              "name": "Breakfast",
+              "foods": ["Oatmeal with berries", "Greek yogurt", "Black coffee"]
+            },
+            {
+              "name": "Lunch",
+              "foods": ["Grilled chicken salad", "Whole grain bread", "Water"]
+            }
+          ]
         }
-     })
-})
+        
+        DO NOT add any fields that are not in this example. Your response must be a valid JSON object with no additional text.`;
+
+        const dietResult = await model.generateContent(dietPrompt);
+        const dietPlanText = dietResult.response.text();
+
+        // AI input validation
+        let dietPlan = JSON.parse(dietPlanText);
+        dietPlan = validateDietPlan(dietPlan);
+
+        // saving to the database
+
+        const planId = await ctx.runMutation(api.plans.createPlan, {
+        userId: user_id,
+        dietPlan,
+        isActive: true,
+        workoutPlan,
+        name: `${fitness_goal} Plan - ${new Date().toLocaleDateString()}`,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            planId,
+            workoutPlan,
+            dietPlan,
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+
+
+    } catch (error) {
+        console.log("Issue in creating the plan")
+        return new Response(
+            JSON.stringify({
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+            }),
+            {
+                status: 500,
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+    }
+  }) 
+});   
+
 
 export default http;
