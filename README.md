@@ -1,2 +1,2 @@
 # Home Page
-![image alt]{https://github.com/VithmalKavirathne/FitGenie_AI_assitant/blob/a757121bcf1f76fc3f4a6bfd228e53b601099862/Screenshot%20(731).png}
+![image alt]{https://github.com/VithmalKavirathne/FitGenie_AI_assitant/blob/2c19ea29418dd3817e07ef12e16d4cab04061961/Screenshot%20(731).png}
